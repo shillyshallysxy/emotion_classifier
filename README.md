@@ -5,8 +5,12 @@ emotion classifier based on kaggle fer2013
 
 ![image](https://github.com/shillyshallysxy/emotion_classifier/blob/master/pic/sample3.png)
 
-![image](https://github.com/shillyshallysxy/emotion_classifier/blob/master/pic/sample2.png)      ![image](https://github.com/shillyshallysxy/emotion_classifier/blob/master/pic/sample4.png)
+![image](https://github.com/shillyshallysxy/emotion_classifier/blob/master/pic/sample2.png)
+
+![image](https://github.com/shillyshallysxy/emotion_classifier/blob/master/pic/sample4.png)
 
 ![image](https://github.com/shillyshallysxy/emotion_classifier/blob/master/pic/sample5.png)
+
 ![image](https://github.com/shillyshallysxy/emotion_classifier/blob/master/pic/sample6.png)
+
 ![image](https://github.com/shillyshallysxy/emotion_classifier/blob/master/pic/sample1.png)

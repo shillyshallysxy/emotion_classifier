@@ -19,4 +19,5 @@ emotion classifier based on kaggle fer2013
 最后因为更换电脑（升级了1080ti）原模型丢失，随手用以上的文件重新训练了一个模型，没有做什么调整优化
 
 以下是训练好的模型在test集上的混淆矩阵，以及在整个test上的准确度
+
 ![image](https://github.com/shillyshallysxy/emotion_classifier/blob/master/pic/acc.png)

@@ -15,3 +15,7 @@ emotion classifier based on kaggle fer2013
 ![image](https://github.com/shillyshallysxy/emotion_classifier/blob/master/pic/sample6.png)
 
 ![image](https://github.com/shillyshallysxy/emotion_classifier/blob/master/pic/sample1.png)
+
+最后，这是在test集上的混淆矩阵，以及在整个test上的准确度
+
+![image](https://github.com/shillyshallysxy/emotion_classifier/blob/master/pic/acc.png）

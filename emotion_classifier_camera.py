@@ -10,7 +10,7 @@ from keras.models import model_from_json
 root_path='./pic/'
 model_path=root_path+'/model/'
 img_size=48
-# emotion_labels = ['angry','fear','happy','sad','surprise','neutral']
+# emo_labels = ['angry','fear','happy','sad','surprise','neutral']
 #load json and create model arch
 emo_labels = ['angry', 'disgust:', 'fear', 'happy', 'sad', 'surprise', 'neutral']
 num_class = len(emo_labels)
@@ -67,7 +67,7 @@ if __name__ == '__main__':
                     rs_sum+=np.array(result)
                 print(rs_sum)
                 label=np.argmax(rs_sum)
-                emo = emotion_labels[label]
+                emo = emo_labels[label]
                 print ('Emotion : ',emo)
                 cv2.rectangle(frame, (x - 10, y - 10), (x + w + 10, y + h + 10), color, thickness = 2)
                 font = cv2.FONT_HERSHEY_SIMPLEX

@@ -86,9 +86,9 @@ class Model:
                 validation_steps=2000,
                 #callbacks=[early_stopping]
                 )
-        history_eval=self.model.evaluate_generator(
-                eval_generator,
-                steps=2000)
+#         history_eval=self.model.evaluate_generator(
+#                 eval_generator,
+#                 steps=2000)
         history_predict=self.model.predict_generator(
                 eval_generator,
                 steps=2000)
@@ -96,7 +96,7 @@ class Model:
             f.write(str(history_fit.history))
         with open(root_path+'/model_predict_log','w') as f:
             f.write(str(history_predict))
-        print("%s: %.2f%%" % (self.model.metrics_names[1], history_eval[1] * 100))
+#         print("%s: %.2f%%" % (self.model.metrics_names[1], history_eval[1] * 100))
         print('model trained')
     def save_model(self):
         model_json=self.model.to_json()

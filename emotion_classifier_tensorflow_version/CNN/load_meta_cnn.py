@@ -20,10 +20,9 @@ pic_path = os.path.join(data_folder_name, data_path_name, pic_path_name)
 eval_path = os.path.join(data_folder_name, data_path_name, 'fer2013', 'test')
 
 img_size = 48
-confusion_matrix = True
+confusion_matrix = False # 设为True即对验证集生成混淆矩阵（或测试集）
 emotion_labels = ['angry', 'disgust:', 'fear', 'happy', 'sad', 'surprise', 'neutral']
 num_class = len(emotion_labels)
-
 
 # config=tf.ConfigProto(log_device_placement=True)
 sess = tf.Session()
@@ -31,8 +30,6 @@ sess = tf.Session()
 saver = tf.train.import_meta_graph(ckpt_path+'.meta')
 saver.restore(sess, ckpt_path)
 graph = tf.get_default_graph()
-name = [n.name for n in graph.as_graph_def().node]
-print(name)
 x_input = graph.get_tensor_by_name('x_input:0')
 dropout = graph.get_tensor_by_name('dropout:0')
 logits = graph.get_tensor_by_name('project/output/logits:0')
@@ -130,8 +127,6 @@ if __name__ == '__main__':
                 cv2.imshow('Emotion_classifier', img)
                 k = cv2.waitKey(0)
                 cv2.destroyAllWindows()
-                # if k & 0xFF == ord('q'):
-                #     break
     if confusion_matrix:
         with open(csv_path, 'r') as f:
             csvr = csv.reader(f)

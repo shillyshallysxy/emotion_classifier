@@ -8,10 +8,10 @@ default_height = 48
 default_width = 48
 batch_size = 256
 test_batch_size = 2048
-shuffle_pool_size = 4000
-generations = 1000
+shuffle_pool_size = 4000 # 内存小就调小些
+generations = 5000
 save_flag = True
-retrain = True
+retrain = False # 是否要继续之前的训练
 data_folder_name = '..\\temp'
 data_path_name = 'cv'
 pic_path_name = 'pic'
@@ -34,22 +34,6 @@ def pre_process_img(image):
     image = tf.random_crop(image, [default_height-np.random.randint(0, 4), default_width-np.random.randint(0, 4), 1])
     image = tf.image.resize_images(image, [default_height, default_width])
     return image
-
-
-def __parse_function_image(serial_exmp_):
-    features_ = tf.parse_single_example(serial_exmp_, features={"image/label": tf.FixedLenFeature([], tf.int64),
-                                                                "image/height": tf.FixedLenFeature([], tf.int64),
-                                                                "image/width": tf.FixedLenFeature([], tf.int64),
-                                                                "image/raw": tf.FixedLenFeature([], tf.string)})
-    label_ = tf.cast(features_["image/label"], tf.int32)
-    height_ = tf.cast(features_["image/height"], tf.int32)
-    width_ = tf.cast(features_["image/width"], tf.int32)
-    image_ = tf.image.decode_jpeg(features_["image/raw"])
-    image_ = tf.reshape(image_, [height_, width_, channel])
-    image_ = tf.image.convert_image_dtype(image_, dtype=tf.float32)
-    image_ = tf.image.resize_images(image_, [default_height, default_width])
-    # image_ = pre_process_img(image_)
-    return image_, label_
 
 
 def __parse_function_csv(serial_exmp_):
@@ -91,11 +75,6 @@ def main(argv):
         data_set_test = data_set_test.shuffle(shuffle_pool_size).batch(test_batch_size).repeat()
         data_set_test_iter = data_set_test.make_one_shot_iterator()
         test_handle = sess.run(data_set_test_iter.string_handle())
-
-        data_set_eval = get_dataset(record_name_eval)
-        data_set_eval = data_set_eval.shuffle(shuffle_pool_size).batch(test_batch_size).repeat()
-        data_set_eval_iter = data_set_eval.make_one_shot_iterator()
-        eval_handle = sess.run(data_set_eval_iter.string_handle())
 
         handle = tf.placeholder(tf.string, shape=[], name='handle')
         iterator = tf.data.Iterator.from_string_handle(handle, data_set_train.output_types, data_set_train.output_shapes)

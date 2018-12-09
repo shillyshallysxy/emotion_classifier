@@ -1,6 +1,8 @@
 # emotion_classifier
 emotion classifier based on kaggle fer2013
 
+（更新：emotion_classifier_tensorflow_version中为使用tensorflow重构过的该表情识别系统）
+
 csdn地址：https://blog.csdn.net/shillyshally/article/details/80912854
 
 基于Keras框架搭建并训练了卷积神经网络模型，用于人脸表情识别，训练集和测试集均采用kaggle的fer2013数据集

@@ -11,18 +11,22 @@ pic_path_name = 'pic'
 cv_path_name = 'fer2013'
 csv_file_name = 'fer2013.csv'
 ckpt_name = 'cnn_emotion_classifier.ckpt'
+model_path_name = 'cnn_inuse'
 casc_name = 'haarcascade_frontalface_alt.xml'
 cv_path = os.path.join(data_folder_name, data_path_name, cv_path_name)
 csv_path = os.path.join(cv_path, csv_file_name)
-ckpt_path = os.path.join(data_folder_name, data_path_name, ckpt_name)
+ckpt_path = os.path.join(data_folder_name, data_path_name, model_path_name, ckpt_name)
 casc_path = os.path.join(data_folder_name, data_path_name, casc_name)
 pic_path = os.path.join(data_folder_name, data_path_name, pic_path_name)
-eval_path = os.path.join(data_folder_name, data_path_name, 'fer2013', 'test')
 
-img_size = 48
-confusion_matrix = False # 设为True即对验证集生成混淆矩阵（或测试集）
+channel = 1
+default_height = 48
+default_width = 48
+confusion_matrix = True
+use_advanced_method = True
 emotion_labels = ['angry', 'disgust:', 'fear', 'happy', 'sad', 'surprise', 'neutral']
 num_class = len(emotion_labels)
+
 
 # config=tf.ConfigProto(log_device_placement=True)
 sess = tf.Session()
@@ -30,40 +34,78 @@ sess = tf.Session()
 saver = tf.train.import_meta_graph(ckpt_path+'.meta')
 saver.restore(sess, ckpt_path)
 graph = tf.get_default_graph()
+name = [n.name for n in graph.as_graph_def().node]
+print(name)
 x_input = graph.get_tensor_by_name('x_input:0')
 dropout = graph.get_tensor_by_name('dropout:0')
 logits = graph.get_tensor_by_name('project/output/logits:0')
 
 
-def prodece_confusion_matrix(images_, total_num_):
-    results = np.array([0]*num_class)
+def produce_result(images_):
+    images_ = np.multiply(np.array(images_), 1./255)
+    pred_logits_ = sess.run(tf.nn.softmax(logits), {x_input: images_, dropout: 1.0})
+    return pred_logits_
+
+
+def produce_advanced_result(images_):
+    images_ = np.multiply(np.array(images_), 1. / 255)
+    rsz_img = []
+    rsz_imgs = []
+    for image_ in images_:
+        rsz_img.append(image_)
+    rsz_imgs.append(np.array(rsz_img))
+    rsz_img = []
+    for image_ in images_:
+        rsz_img.append(np.reshape(cv2.resize(image_[2:45, :], (default_height, default_width)),
+                                  [default_height, default_width, channel]))
+    rsz_imgs.append(np.array(rsz_img))
+    rsz_img = []
+    for image_ in images_:
+        rsz_img.append(np.reshape(cv2.resize(cv2.flip(image_, 1), (default_height, default_width)),
+                                  [default_height, default_width, channel]))
+    rsz_imgs.append(np.array(rsz_img))
+    pred_logits_ = []
+    for rsz_img in rsz_imgs:
+        pred_logits_.append(sess.run(tf.nn.softmax(logits), {x_input: rsz_img, dropout: 1.0}))
+    return np.sum(pred_logits_, axis=0)
+
+
+def produce_results(images_):
+    results = []
+    if use_advanced_method:
+        pred_logits_ = produce_advanced_result(images_)
+    else:
+        pred_logits_ = produce_result(images_)
+    pred_logits_list_ = np.array(np.reshape(np.argmax(pred_logits_, axis=1), [-1])).tolist()
+    for num in range(num_class):
+        results.append(pred_logits_list_.count(num))
+    result_decimals = np.around(np.array(results) / len(images_), decimals=3)
+    return results, result_decimals
+
+
+def produce_confusion_matrix(images_list_, total_num_):
     total = []
-    for imgs_ in images_:
-        for img_ in imgs_:
-            results[np.argmax(predict_emotion(img_))] += 1
-        print(results, np.around(results/len(imgs_), decimals=3))
+    total_decimals = []
+    for ii, images_ in enumerate(images_list_):
+        results, result_decimals = produce_results(images_)
         total.append(results)
-        results = np.array([0]*num_class)
+        total_decimals.append(result_decimals)
+        print(results, ii, ":", result_decimals[ii])
+        print(result_decimals)
     sum = 0
     for i_ in range(num_class):
         sum += total[i_][i_]
-    print('acc: {:.3f} %'.format(sum*100./total_num_))
+    print('acc: {:.3f} %'.format(sum * 100. / total_num_))
     print('Using ', ckpt_name)
 
 
-def predict_emotion(face_img_, img_size_=48):
-    face_img_ = face_img_ * (1. / 255)
-    resized_img_ = cv2.resize(face_img_, (img_size_, img_size_))  # ,interpolation=cv2.INTER_LINEAR
-    rsz_img = []
-    rsz_img.append(resized_img_[:, :])
-    rsz_img.append(resized_img_[2:45, :])
-    rsz_img.append(cv2.flip(rsz_img[0], 1))
-    for i_, rsz_image in enumerate(rsz_img):
-        rsz_img[i_] = cv2.resize(rsz_image, (img_size_, img_size_)).reshape(img_size_, img_size_, 1)
-    rsz_img = np.array(rsz_img)
-    feed_dict_ = {x_input: rsz_img, dropout: 1.0}
-    pred_logits_ = sess.run([tf.reduce_sum(tf.nn.softmax(logits), axis=0)], feed_dict_)
-    return np.squeeze(pred_logits_)
+def predict_emotion(image_):
+    image_ = cv2.resize(image_, (default_height, default_width))
+    image_ = np.reshape(image_, [-1, default_height, default_width, channel])
+    if use_advanced_method:
+        return produce_advanced_result(image_)[0]
+    else:
+        return produce_result(image_)[0]
 
 
 def face_detect(image_path, casc_path_=casc_path):
@@ -127,19 +169,21 @@ if __name__ == '__main__':
                 cv2.imshow('Emotion_classifier', img)
                 k = cv2.waitKey(0)
                 cv2.destroyAllWindows()
+                # if k & 0xFF == ord('q'):
+                #     break
     if confusion_matrix:
         with open(csv_path, 'r') as f:
             csvr = csv.reader(f)
             header = next(csvr)
             rows = [row for row in csvr]
             val = [row[:-1] for row in rows if row[-1] == 'PublicTest']
-            # tst = [row[:-1] for row in rows if row[-1] == 'PrivateTest']
+            tst = [row[:-1] for row in rows if row[-1] == 'PrivateTest']
         confusion_images_total = []
         confusion_images = {0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: []}
-        test_set = val
+        test_set = tst
         total_num = len(test_set)
         for label_image_ in test_set:
             label_ = int(label_image_[0])
-            image_ = np.reshape(np.asarray([int(p) for p in label_image_[-1].split()]), [img_size, img_size, 1])
+            image_ = np.reshape(np.asarray([int(p) for p in label_image_[-1].split()]), [default_height, default_width, 1])
             confusion_images[label_].append(image_)
-        prodece_confusion_matrix(confusion_images.values(), total_num)
+        produce_confusion_matrix(confusion_images.values(), total_num)

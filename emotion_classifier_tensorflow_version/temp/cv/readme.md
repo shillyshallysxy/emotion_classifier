@@ -3,4 +3,4 @@
 
 测试时将测试图片放入pic文件夹即可
 
-模型放入model_inuse即可
+模型放入model_inuse即可data.ckpt过大无法上传

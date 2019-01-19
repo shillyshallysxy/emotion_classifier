@@ -20,6 +20,7 @@ class CNN_Model():
         self.y_target = tf.placeholder(dtype=tf.int32, shape=[None], name='y_target')
         self.batch_size = tf.shape(self.x_input)[0]
         self.logits = self.project_layer(self.cnn_layer())
+#         self.logits = self.res_net_layer()
         with tf.variable_scope("loss"):
             self.loss = self.loss_layer(self.logits)
             self.train_step = self.optimizer(self.loss, optimizer_)
@@ -144,7 +145,41 @@ class CNN_Model():
                 b_out = tf.get_variable("b_out", [self.num_tags], initializer=tf.zeros_initializer())
                 pred_ = tf.add(tf.matmul(output2, w_out), b_out, name='logits')
         return pred_
+    
+    def res_net_layer(self):
+        print('Using Res Net ')
+        with tf.variable_scope("resnet"):
+            conv1_weight = tf.get_variable('conv1_weight', [5, 5, self.channel, 32],
+                                           dtype=tf.float32, initializer=self.initializer)
+            conv1 = tf.nn.conv2d(self.x_input, conv1_weight, [1, 1, 1, 1], padding='SAME')
+            conv1 = tf.layers.batch_normalization(conv1, training=self.is_training)
+            conv1 = tf.nn.relu(conv1)
+            conv1 = tf.nn.max_pool(conv1, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='SAME', name='pool_layer')
+            resnet = resnet_utils.block_net(conv1, 32, [32, 32], self.is_training, 1, 'resnet1')
+            resnet = resnet_utils.block_net(resnet, 32, [32, 64], self.is_training, 2, 'resnet2')
+            resnet = resnet_utils.block_net(resnet, 64, [64, 64], self.is_training, 1, 'resnet3')
+            resnet = resnet_utils.block_net(resnet, 64, [64, 128], self.is_training, 2, 'resnet4')
+            resnet = resnet_utils.block_net(resnet, 128, [128, 128], self.is_training, 1, 'resnet5')
+            resnet = resnet_utils.block_net(resnet, 128, [128, 256], self.is_training, 2, 'resnet6')
+            resnet = resnet_utils.block_net(resnet, 256, [256, 256], self.is_training, 1, 'resnet7')
+            # resnet = resnet_utils.bottleneck(resnet, 256, [64, 64, 512], self.is_training, 2, 'resnet8')
+            pool = tf.nn.avg_pool(resnet, [1, 3, 3, 1], [1, 1, 1, 1], padding='VALID')
 
+            # convf_weight = tf.get_variable('convf_weight', [3, 3, 256, 256],
+            #                                dtype=tf.float32, initializer=self.initializer)
+            # convf = tf.nn.conv2d(resnet, convf_weight, [1, 1, 1, 1], padding='VALID')
+            # convf = tf.layers.batch_normalization(convf, training=self.is_training)
+
+            project_in = pool
+            project_in = tf.reshape(project_in, [self.batch_size, -1])
+        with tf.variable_scope("project"):
+            with tf.variable_scope("output"):
+                w_tanh1 = tf.get_variable("w_tanh1", [256, self.num_tags], initializer=self.initializer,
+                                          regularizer=tf.contrib.layers.l2_regularizer(0.001))
+                b_tanh1 = tf.get_variable("b_tanh1", [self.num_tags], initializer=tf.zeros_initializer())
+                output = tf.add(tf.matmul(project_in, w_tanh1), b_tanh1, name='logits')
+        return output    
+    
     def loss_layer(self, project_logits):
         with tf.variable_scope("loss"):
             loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(

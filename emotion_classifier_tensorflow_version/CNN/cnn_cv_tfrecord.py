@@ -3,14 +3,14 @@ import os
 import numpy as np
 from CNN import cnn
 
-channel = 1
-default_height = 48
+channel = 1  # 图像通道数
+default_height = 48  # 图像宽高
 default_width = 48
-batch_size = 256
-test_batch_size = 2048
+batch_size = 256  # 批尺寸
+test_batch_size = 2048  # 测试时的批尺寸
 shuffle_pool_size = 4000 # 内存小就调小些
-generations = 5000
-save_flag = True
+generations = 5000  # 总迭代数
+save_flag = True  # 是否保存模型
 retrain = False # 是否要继续之前的训练
 data_folder_name = '..\\temp'
 data_path_name = 'cv'
@@ -36,6 +36,7 @@ def pre_process_img(image):
     return image
 
 
+# tfrecord的数据读入部分
 def __parse_function_csv(serial_exmp_):
     features_ = tf.parse_single_example(serial_exmp_,
                                         features={"image/label": tf.FixedLenFeature([], tf.int64),
@@ -53,12 +54,14 @@ def __parse_function_csv(serial_exmp_):
     return image_, label_
 
 
+# 同上
 def get_dataset(record_name_):
     record_path_ = os.path.join(data_folder_name, data_path_name, record_name_)
     data_set_ = tf.data.TFRecordDataset(record_path_)
     return data_set_.map(__parse_function_csv)
 
 
+# 评估准确度
 def evaluate(logits_, y_):
     return np.mean(np.equal(np.argmax(logits_, axis=1), y_))
 

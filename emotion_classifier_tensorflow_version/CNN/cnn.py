@@ -4,11 +4,11 @@ from tensorflow.contrib.layers.python.layers import initializers
 
 class CNN_Model():
     def __init__(self, num_tags_=7, lr_=0.001, channel_=1, hidden_dim_=1024, full_shape_=2304, optimizer_='Adam'):
-        self.num_tags = num_tags_
-        self.lr = lr_
-        self.full_shape = full_shape_
-        self.channel = channel_
-        self.hidden_dim = hidden_dim_
+        self.num_tags = num_tags_  # 分为几类（七种表情所以分为7类）
+        self.lr = lr_  # 学习率
+        self.full_shape = full_shape_  # get_shape使用不了，手动计算，权宜之计
+        self.channel = channel_  # 输入图像的通道数黑白为1，rgb图为3
+        self.hidden_dim = hidden_dim_ # 第一个全连接层的hidden_dim
         self.conv_feature = [32, 32, 32, 64]
         self.conv_size = [1, 5, 3, 5]
         self.maxpool_size = [0, 3, 3, 3]
@@ -25,6 +25,7 @@ class CNN_Model():
             self.loss = self.loss_layer(self.logits)
             self.train_step = self.optimizer(self.loss, optimizer_)
 
+    # 卷积层部分
     def cnn_layer(self):
         with tf.variable_scope("conv1"):
             conv1_weight = tf.get_variable('conv1_weight', [self.conv_size[0], self.conv_size[0],
@@ -77,6 +78,7 @@ class CNN_Model():
             norm4 = tf.nn.lrn(pool4, depth_radius=5, bias=2.0, alpha=1e-3, beta=0.75, name='norm4')
         return norm4
 
+    # 略微简单的卷积层（和上面一个二选一）
     def cnn_layer_single(self):
         with tf.variable_scope("conv1"):
             conv1_weight = tf.get_variable('conv1_weight', [self.conv_size[0], self.conv_size[0],
@@ -125,6 +127,7 @@ class CNN_Model():
                                    padding='SAME', name='pool_layer4')
         return pool4
 
+    # 全连接层
     def project_layer(self, x_in_):
         with tf.variable_scope("project"):
             with tf.variable_scope("hidden"):
@@ -146,6 +149,7 @@ class CNN_Model():
                 pred_ = tf.add(tf.matmul(output2, w_out), b_out, name='logits')
         return pred_
     
+    # resnet部分，如果使用则不需要使用上面的cnn和project部分
     def res_net_layer(self):
         print('Using Res Net ')
         with tf.variable_scope("resnet"):

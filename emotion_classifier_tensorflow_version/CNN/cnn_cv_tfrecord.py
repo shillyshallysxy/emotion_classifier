@@ -6,8 +6,8 @@ from CNN import cnn
 channel = 1  # 图像通道数
 default_height = 48  # 图像宽高
 default_width = 48
-batch_size = 256  # 批尺寸
-test_batch_size = 2048  # 测试时的批尺寸
+batch_size = 256  # 批尺寸，内存小就调小些
+test_batch_size = 256  # 测试时的批尺寸，内存小就调小些
 shuffle_pool_size = 4000 # 内存小就调小些
 generations = 5000  # 总迭代数
 save_flag = True  # 是否保存模型
